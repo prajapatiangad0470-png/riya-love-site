@@ -1,0 +1,242 @@
+from PIL import Image
+from pathlib import Path
+import zipfile, textwrap, shutil
+
+base = Path("/mnt/data/riya_love_site")
+base.mkdir(exist_ok=True)
+
+# Fix the uploaded photo orientation: the original is sideways, so rotate 90° CCW.
+src = Path("/mnt/data/riya.jpg")
+fixed = base / "Riya.jpg"
+img = Image.open(src)
+img = img.rotate(90, expand=True)
+img.save(fixed, quality=95)
+
+html = r'''<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For Riya ❤️</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden}
+body{
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+  background:#090014;color:#fff;
+}
+.screen{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;opacity:0;pointer-events:none;
+  transition:opacity .8s ease,transform .8s ease;
+  transform:scale(.96);overflow:hidden;
+}
+.screen.active{opacity:1;pointer-events:auto;transform:scale(1)}
+.bg{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 50% 35%,rgba(255,45,120,.24),transparent 30%),
+    radial-gradient(circle at 20% 80%,rgba(150,70,255,.20),transparent 30%),
+    linear-gradient(145deg,#080010,#17001e 50%,#05000a);
+}
+.title{position:relative;z-index:5;text-align:center;font-size:clamp(28px,8vw,58px);
+  text-shadow:0 0 15px #ff4f9a,0 0 35px #ff1778;margin-bottom:18px}
+.sub{position:relative;z-index:5;color:#ffd6e8;text-align:center;font-size:15px;margin-bottom:28px}
+
+.heart-wrap{position:relative;z-index:5;width:220px;height:210px;margin-bottom:35px}
+.heart{
+  position:absolute;width:145px;height:145px;left:38px;top:35px;
+  background:linear-gradient(145deg,#ff315f,#ff006e 55%,#b000ff);
+  transform:rotate(-45deg);border-radius:22px;
+  box-shadow:0 0 20px #ff287f,0 0 55px rgba(255,0,120,.65);
+  animation:heartbeat 1.25s infinite;
+}
+.heart:before,.heart:after{content:"";position:absolute;width:145px;height:145px;border-radius:50%;background:inherit}
+.heart:before{top:-72px;left:0}.heart:after{left:72px;top:0}
+@keyframes heartbeat{0%,100%{transform:rotate(-45deg) scale(1)}
+50%{transform:rotate(-45deg) scale(1.08)}}
+
+.arrow{
+  position:absolute;z-index:8;width:185px;height:12px;right:-210px;top:92px;
+  background:linear-gradient(90deg,#fff,#ffd5e6);border-radius:10px;
+  box-shadow:0 0 12px #fff,0 0 25px #ff4c9b;
+  transform:rotate(-8deg);opacity:0;
+}
+.arrow:after{
+  content:"";position:absolute;right:-3px;top:-8px;
+  border-left:22px solid #fff;border-top:14px solid transparent;border-bottom:14px solid transparent;
+}
+.arrow:before{
+  content:"";position:absolute;left:-15px;top:-9px;
+  width:18px;height:30px;border-left:3px solid #ff4c9b;border-radius:50%;
+}
+.shoot .arrow{animation:shoot .9s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes shoot{
+  0%{right:-210px;opacity:0}
+  15%{opacity:1}
+  100%{right:15px;opacity:1}
+}
+.shoot .heart{animation:pulseBig .9s 1}
+@keyframes pulseBig{50%{transform:rotate(-45deg) scale(1.25)}}
+
+.btn{
+  position:relative;z-index:10;border:0;border-radius:999px;padding:14px 27px;
+  font-size:16px;font-weight:800;color:#fff;cursor:pointer;
+  background:linear-gradient(90deg,#ff176d,#a000ff);
+  box-shadow:0 0 18px rgba(255,20,120,.6);transition:.25s;
+}
+.btn:active{transform:scale(.94)}
+
+.particles{position:absolute;inset:0;overflow:hidden;z-index:2;pointer-events:none}
+.particle{position:absolute;bottom:-30px;font-size:20px;animation:floatUp linear forwards;opacity:.9}
+@keyframes floatUp{to{transform:translateY(-115vh) rotate(360deg);opacity:0}}
+
+.photo-card{
+  position:relative;z-index:5;width:min(88vw,520px);height:min(58vh,430px);
+  padding:8px;border-radius:25px;
+  background:linear-gradient(135deg,#ff3b88,#8e35ff,#ff3b88);
+  box-shadow:0 0 30px rgba(255,38,130,.4);
+  animation:cardIn 1s ease both;
+}
+.photo-card img{
+  width:100%;height:100%;display:block;border-radius:19px;
+  object-fit:contain;background:#050008;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(40px) scale(.88)}
+to{opacity:1;transform:none}}
+
+.messages{
+  position:absolute;z-index:4;bottom:-110%;width:100%;text-align:center;
+  display:flex;flex-direction:column;gap:13px;animation:scrollMsgs 22s linear infinite;
+}
+.messages span{
+  font-size:clamp(20px,5vw,34px);font-weight:800;
+  text-shadow:0 0 10px #ff2c87,0 0 22px rgba(255,0,120,.5);
+}
+@keyframes scrollMsgs{to{transform:translateY(-1250%)}}
+
+.photo-title{position:relative;z-index:6;margin:12px 0 5px;font-size:28px;text-shadow:0 0 15px #ff3f93}
+.photo-sub{position:relative;z-index:6;color:#ffd5e7;margin-bottom:14px}
+
+.final-card{
+  position:relative;z-index:5;width:min(90vw,500px);padding:28px 22px;border-radius:28px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);
+  backdrop-filter:blur(12px);text-align:center;box-shadow:0 0 45px rgba(255,0,120,.25);
+}
+.final-card h2{font-size:34px;margin-bottom:12px}
+.final-card p{line-height:1.7;color:#ffe0ed;font-size:17px}
+.big-heart{font-size:72px;animation:heartbeat 1.1s infinite;margin:15px}
+.dots{position:absolute;inset:0;background-image:radial-gradient(#fff 1px,transparent 1px);
+background-size:45px 45px;opacity:.08;animation:moveDots 12s linear infinite}
+@keyframes moveDots{to{background-position:90px 90px}}
+</style>
+</head>
+<body>
+
+<section id="s1" class="screen active">
+  <div class="bg"></div><div class="dots"></div><div id="p1" class="particles"></div>
+  <div class="title">For My Riya ❤️</div>
+  <div class="sub">Ek chhota sa surprise sirf tumhare liye ✨</div>
+  <div id="heartWrap" class="heart-wrap">
+    <div class="heart"></div><div class="arrow"></div>
+  </div>
+  <button class="btn" id="enterBtn">Enter To My Heart 💘</button>
+</section>
+
+<section id="s2" class="screen">
+  <div class="bg"></div><div class="dots"></div><div id="p2" class="particles"></div>
+  <div class="photo-title">My Beautiful Riya 🌸</div>
+  <div class="photo-sub">Ye jagah tumhare naam ❤️</div>
+  <div class="photo-card"><img src="Riya.jpg" alt="Riya"></div>
+  <div class="messages" aria-hidden="true">
+    <span>❤️ I Love You Riya ❤️</span><span>🥹 I Miss You Riya</span>
+    <span>💋 Kiss You Riya</span><span>🫶 Meri Babu Riya</span>
+    <span>💗 Meri Sona Riya</span><span>🌸 Sweetheart Riya</span>
+    <span>💞 Riya, tum meri favourite ho</span><span>✨ Riya, always special</span>
+    <span>😘 Love you so much Riya</span><span>🌙 Good vibes with Riya</span>
+    <span>💖 Riya = happiness</span><span>🥰 Meri cute Riya</span>
+    <span>❤️ Riya, tum bahut precious ho</span><span>🫂 A big hug for Riya</span>
+    <span>💘 Riya, my heart has your name</span>
+  </div>
+  <button class="btn" style="position:absolute;bottom:22px;z-index:10" id="nextBtn">One More 💌</button>
+</section>
+
+<section id="s3" class="screen">
+  <div class="bg"></div><div class="dots"></div><div id="p3" class="particles"></div>
+  <div class="final-card">
+    <div class="big-heart">❤️</div>
+    <h2>Riya, this is for you ✨</h2>
+    <p>
+      Tumhari smile ek alag hi magic hai. 🌸<br>
+      Is chhoti si website mein bas ek baat baar-baar kehni thi—
+      <b>I LOVE YOU RIYA ❤️</b>
+    </p>
+    <br>
+    <button class="btn" id="againBtn">Replay Surprise 🔄</button>
+  </div>
+</section>
+
+<script>
+const $=id=>document.getElementById(id);
+function show(id){
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+  $(id).classList.add('active');
+}
+function particles(id){
+  const box=$(id);
+  setInterval(()=>{
+    const e=document.createElement('div');
+    e.className='particle';
+    e.textContent=['❤️','💖','💕','✨','🌸','💗','💘'][Math.floor(Math.random()*7)];
+    e.style.left=Math.random()*100+'%';
+    e.style.animationDuration=(4+Math.random()*5)+'s';
+    e.style.fontSize=(14+Math.random()*22)+'px';
+    box.appendChild(e);
+    setTimeout(()=>e.remove(),9500);
+  },260);
+}
+particles('p1');particles('p2');particles('p3');
+
+$('enterBtn').addEventListener('click',()=>{
+  const w=$('heartWrap');
+  $('enterBtn').disabled=true;
+  w.classList.add('shoot');
+  setTimeout(()=>show('s2'),1100);
+});
+$('nextBtn').addEventListener('click',()=>show('s3'));
+$('againBtn').addEventListener('click',()=>{
+  $('heartWrap').classList.remove('shoot');
+  $('enterBtn').disabled=false;
+  show('s1');
+});
+</script>
+</body>
+</html>'''
+
+(base / "index.html").write_text(html, encoding="utf-8")
+
+readme = """# Riya Love Site ❤️
+
+Files:
+- index.html
+- Riya.jpg
+
+For GitHub Pages:
+1. Create a repository.
+2. Upload both files to the repository root.
+3. Open Settings → Pages.
+4. Select Deploy from branch → main → /root.
+5. Save and open the generated Pages link.
+
+Keep the filename exactly `Riya.jpg`.
+"""
+(base / "README.txt").write_text(readme, encoding="utf-8")
+
+zip_path = Path("/mnt/data/Riya_Love_Site_Updated.zip")
+with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+    for p in [base/"index.html", base/"Riya.jpg", base/"README.txt"]:
+        z.write(p, p.name)
+
+print(f"Done. Created: {zip_path}")
+print("The photo has been rotated to the correct upright orientation and included as Riya.jpg.")
+  
